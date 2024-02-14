@@ -37,7 +37,7 @@ pub struct World<T> {
 const PRESSURE_MULTIPLIER: f64 = 10000.;
 const STEP: f64 = 0.006;
 const FRICTION: f64 = 0.5;
-pub const PARTICLE_RADIUS: f64 = 6.;
+pub const PARTICLE_RADIUS: f64 = 4.;
 const MOUSE_FORCE: f64 = -200.;
 
 fn smoothing_kernel_gradient(d: f64) -> f64 {
@@ -81,7 +81,10 @@ impl<T: GeoQuery<Particle>> World<T> {
         self.tree.query_distance(point, PARTICLE_RADIUS, |other| {
             let p_vec = other.position.sub(&particle.position);
             let p_norm = p_vec.normalized();
-            let d = p_vec.len();
+            let d = p_vec.len().max(0.01);
+            if d > PARTICLE_RADIUS {
+                return;
+            }
             let g = -smoothing_kernel_gradient(d) * PRESSURE_MULTIPLIER;
             gradient = gradient.add(&&p_norm.scalar_mul(g));
             let collision_penalty = particle.velocity.sub(&other.velocity).scalar_mul(-FRICTION);

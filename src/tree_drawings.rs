@@ -51,6 +51,25 @@ impl<T: TreeValue> Drawable for QuadTree<T> {
 
 impl<T: TreeValue> Drawable for ZOrderTree<T> {
     fn draw(&self, ctx: &CanvasRenderingContext2d, draw_context: &DrawContext) -> Option<()> {
+        let mut values = self.values();
+        if let Some(first) = values.next() {
+            let first_position = first.position();
+            ctx.set_stroke_style(&JsValue::from("yellow"));
+            ctx.move_to(first_position.x, first_position.y);
+            values.for_each(|value| {
+                let position = value.position();
+                ctx.line_to(position.x, position.y);
+            });
+            ctx.stroke();
+        }
+        if let Some(mouse_pos) = draw_context.mouse_pos.as_ref() {
+            ctx.set_fill_style(&JsValue::from("red"));
+            ctx.begin_path();
+            self.query_distance(mouse_pos, PARTICLE_RADIUS, |value| {
+                value.draw(ctx, draw_context);
+            });
+            ctx.fill();
+        }
         Some(())
     }
 }

@@ -5,7 +5,7 @@ init().then(async () => {
   document.body.appendChild(canvas);
   canvas.width = canvas.offsetWidth * devicePixelRatio;
   canvas.height = canvas.offsetHeight * devicePixelRatio;
-  const driven = CanvasDriven.new(canvas.width, canvas.height, 2500);
+  const driven = CanvasDriven.new(canvas.width, canvas.height, 1000);
   const ctx = canvas.getContext("2d");
   const mousePos = { x: 0, y: 0 };
   canvas.addEventListener("mousemove", (e) => {
@@ -23,7 +23,7 @@ init().then(async () => {
   });
   while (true) {
     driven.update_mouse_pos(mousePos.x, mousePos.y);
-    driven.evolve();
+    // driven.evolve();
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     driven.draw(ctx);
     await raf();

@@ -15,7 +15,7 @@ use zorder_tree::ZOrderTree;
 
 #[wasm_bindgen]
 pub struct CanvasDriven {
-    world: World<QuadTree<Particle>>,
+    world: World<ZOrderTree<Particle>>,
     draw_context: DrawContext,
 }
 
