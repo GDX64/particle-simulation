@@ -1,4 +1,4 @@
-use kurbo::{Affine, Circle, Rect};
+use kurbo::Rect;
 use wasm_bindgen::JsValue;
 use web_sys::CanvasRenderingContext2d;
 
@@ -20,6 +20,31 @@ pub trait Drawable {
 
 impl<T: TreeValue> Drawable for QuadTree<T> {
     fn draw(&self, ctx: &CanvasRenderingContext2d, draw_context: &DrawContext) -> Option<()> {
+        if let Some(mouse_pos) = draw_context.mouse_pos.as_ref() {
+            ctx.set_fill_style(&JsValue::from("red"));
+            ctx.begin_path();
+            self.query_distance(mouse_pos, PARTICLE_RADIUS, |value| {
+                value.draw(ctx, draw_context);
+            });
+            ctx.fill();
+
+            self.query_distance_path(mouse_pos, PARTICLE_RADIUS)
+                .into_iter()
+                .for_each(|node| {
+                    ctx.set_stroke_style(&JsValue::from("red"));
+                    ctx.begin_path();
+                    let circ = node.get_circ();
+                    ctx.arc(
+                        circ.center.x,
+                        circ.center.y,
+                        circ.radius,
+                        0.0,
+                        std::f64::consts::PI * 2.0,
+                    )
+                    .ok();
+                    ctx.stroke();
+                })
+        }
         Some(())
     }
 }
@@ -56,20 +81,19 @@ impl<T: GeoQuery<Particle> + Drawable> Drawable for World<T> {
         // let center = V2::new(WIDTH as f64 / 2., HEIGHT as f64 / 2.);
         // let gradient = self.calc_gradient(&center);
         // draw_arrow(&center, &center.add(&gradient), ctx);
-        if let Some(ref mouse_pos) = self.mouse_pos {
-            if self.show_quad_tree {
-                self.tree.draw(ctx, draw_context);
-            }
-        };
+        if self.is_pressing_mouse {
+            self.tree.draw(ctx, draw_context);
+        }
         Some(())
     }
 }
 
-impl Drawable for Particle {
+impl<T: TreeValue> Drawable for T {
     fn draw(&self, ctx: &CanvasRenderingContext2d, draw_context: &DrawContext) -> Option<()> {
+        let position = self.position();
         ctx.rect(
-            self.position.x - PARTICLE_RADIUS,
-            self.position.y - PARTICLE_RADIUS,
+            position.x - PARTICLE_RADIUS,
+            position.y - PARTICLE_RADIUS,
             PARTICLE_RADIUS * 2.0,
             PARTICLE_RADIUS * 2.0,
         );

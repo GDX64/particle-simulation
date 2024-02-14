@@ -18,8 +18,8 @@ impl TreeValue for Particle {
     }
 
     fn offset_pos(&mut self) {
-        self.position.x += 0.0001;
-        self.position.y += 0.0001;
+        self.position.x += 0.001;
+        self.position.y += 0.001;
     }
 }
 

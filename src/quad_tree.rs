@@ -1,4 +1,4 @@
-use kurbo::{Circle, Rect, Shape};
+use kurbo::Circle;
 
 use crate::{
     particle::GeoQuery,
@@ -16,7 +16,7 @@ pub struct QuadTree<T> {
     center: V2,
     half_width: f64,
     half_height: f64,
-    rect: Rect,
+    circ: Circle,
 }
 
 pub enum Quadrant {
@@ -35,12 +35,7 @@ impl<T> QuadTreeNode<T> {
 impl<T: TreeValue> QuadTree<T> {
     pub fn new(center: V2, half_width: f64, half_height: f64) -> QuadTree<T> {
         QuadTree {
-            rect: Rect::new(
-                center.x - half_width,
-                center.y - half_height,
-                center.x + half_width,
-                center.y + half_height,
-            ),
+            circ: Circle::new((center.x, center.y), half_width * 2.0_f64.sqrt()),
             node: QuadTreeNode::Empty,
             center,
             half_width,
@@ -48,31 +43,34 @@ impl<T: TreeValue> QuadTree<T> {
         }
     }
 
-    pub fn add_vec(&mut self, vec: Vec<T>) {
+    fn add_vec(&mut self, vec: Vec<T>) {
         vec.into_iter().for_each(|v| {
             self.insert(v);
         });
     }
 
-    pub fn get_rect(&self) -> Rect {
-        self.rect
+    pub fn get_circ(&self) -> Circle {
+        self.circ
     }
 
-    pub fn for_each(&self, f: &mut impl FnMut(&QuadTree<T>)) {
+    pub fn for_each(&self, f: impl Fn(&QuadTree<T>)) {
+        self._for_each(&f);
+    }
+
+    fn _for_each(&self, f: &impl Fn(&QuadTree<T>)) {
+        f(self);
         match &self.node {
             QuadTreeNode::Empty => {}
-            QuadTreeNode::Leaf { value: _ } => {
-                f(self);
-            }
+            QuadTreeNode::Leaf { value: _ } => {}
             QuadTreeNode::Node(v) => {
                 let nw = &v[0];
                 let ne = &v[1];
                 let sw = &v[2];
                 let se = &v[3];
-                nw.for_each(f);
-                ne.for_each(f);
-                sw.for_each(f);
-                se.for_each(f);
+                nw._for_each(f);
+                ne._for_each(f);
+                sw._for_each(f);
+                se._for_each(f);
             }
         }
     }
@@ -84,7 +82,7 @@ impl<T: TreeValue> QuadTree<T> {
             QuadTreeNode::Leaf { value: this_value } => {
                 let mut other =
                     QuadTree::new_node(self.center.clone(), self.half_width, self.half_height);
-                if value.position().sub(&this_value.position()).len() < 0.0001 {
+                if value.position().sub(&this_value.position()).len() < 0.001 {
                     value.offset_pos();
                     return;
                 }
@@ -129,12 +127,7 @@ impl<T: TreeValue> QuadTree<T> {
         );
         QuadTree {
             node: QuadTreeNode::Node(Box::new([nw, ne, sw, se])),
-            rect: Rect::new(
-                center.x - half_width,
-                center.y - half_height,
-                center.x + half_width,
-                center.y + half_height,
-            ),
+            circ: Circle::new((center.x, center.y), half_width * 2.0_f64.sqrt()),
             center,
             half_width,
             half_height,
@@ -158,9 +151,30 @@ impl<T: TreeValue> QuadTree<T> {
         }
     }
 
-    fn _query_distance(&self, r: &Rect, f: &mut impl FnMut(&T)) {
-        let rect = self.get_rect();
-        if !rects_intersect(&rect, r) {
+    pub fn query_distance_path(&self, point: &V2, r: f64) -> Vec<&QuadTree<T>> {
+        let mut vec = Vec::new();
+        let circle = Circle::new((point.x, point.y), r);
+        if !circles_intersect(&self.circ, &circle) {
+            return vec;
+        } else {
+        }
+        vec.push(self);
+        // rect.bounding_box()
+        match &self.node {
+            QuadTreeNode::Empty => {}
+            QuadTreeNode::Leaf { .. } => {}
+            QuadTreeNode::Node(arr) => {
+                vec.extend(arr[0].query_distance_path(point, r));
+                vec.extend(arr[1].query_distance_path(point, r));
+                vec.extend(arr[2].query_distance_path(point, r));
+                vec.extend(arr[3].query_distance_path(point, r));
+            }
+        }
+        vec
+    }
+
+    fn _query_distance(&self, r: &Circle, f: &mut impl FnMut(&T)) {
+        if !circles_intersect(&self.circ, r) {
             return;
         }
         // rect.bounding_box()
@@ -179,19 +193,23 @@ impl<T: TreeValue> QuadTree<T> {
 
 impl<T: TreeValue> GeoQuery<T> for QuadTree<T> {
     fn query_distance(&self, point: &V2, r: f64, mut f: impl FnMut(&T)) {
-        let circ = Circle::new((point.x, point.y), r).bounding_box();
+        let circ = Circle::new((point.x, point.y), r);
         self._query_distance(&circ, &mut f);
     }
 
     fn from_vec(vec: Vec<T>, max_dim: f64) -> Self {
         let mut tree = QuadTree::new(V2::new(0., 0.), max_dim, max_dim);
+        //print tree circle
         tree.add_vec(vec);
         tree
     }
 }
 
-fn rects_intersect(a: &Rect, b: &Rect) -> bool {
-    a.x0 < b.x1 && a.x1 > b.x0 && a.y0 < b.y1 && a.y1 > b.y0
+fn circles_intersect(a: &Circle, b: &Circle) -> bool {
+    let r = a.radius + b.radius;
+    let dx = a.center.x - b.center.x;
+    let dy = a.center.y - b.center.y;
+    r * r > dx * dx + dy * dy
 }
 
 #[cfg(test)]
