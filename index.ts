@@ -1,4 +1,4 @@
-import init, { CanvasDriven } from "./pkg/fluid.js";
+import init, { CanvasDriven } from "./pkg/fluid";
 
 init().then(async () => {
   const canvas = document.createElement("canvas");
@@ -6,7 +6,7 @@ init().then(async () => {
   canvas.width = canvas.offsetWidth * devicePixelRatio;
   canvas.height = canvas.offsetHeight * devicePixelRatio;
   const driven = CanvasDriven.new(canvas.width, canvas.height, 1000);
-  const ctx = canvas.getContext("2d");
+  const ctx = canvas.getContext("2d")!;
   const mousePos = { x: 0, y: 0 };
   canvas.addEventListener("mousemove", (e) => {
     mousePos.x = e.offsetX * devicePixelRatio;

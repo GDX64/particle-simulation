@@ -1,0 +1,24 @@
+{
+  "name": "particle-simulation",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "wasm-pack build --target=web && npx vite"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/GDX64/particle-simulation.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/GDX64/particle-simulation/issues"
+  },
+  "homepage": "https://github.com/GDX64/particle-simulation#readme",
+  "dependencies": {
+    "vite": "^5.1.3"
+  }
+}
+
