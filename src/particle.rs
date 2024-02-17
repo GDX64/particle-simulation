@@ -59,8 +59,9 @@ impl<T: GeoQuery<Particle>> World<T> {
         }
     }
 
-    pub fn update_mouse_pos(&mut self, mouse_pos: Option<V2>) {
+    pub fn update_mouse_pos(&mut self, mouse_pos: Option<V2>, is_pressing: bool) {
         self.mouse_pos = mouse_pos;
+        self.is_pressing_mouse = is_pressing;
     }
 
     pub fn add_random_particles(&mut self, n: usize, rng: impl Fn() -> f64) {

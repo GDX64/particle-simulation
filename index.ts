@@ -5,9 +5,9 @@ init().then(async () => {
   document.body.appendChild(canvas);
   canvas.width = canvas.offsetWidth * devicePixelRatio;
   canvas.height = canvas.offsetHeight * devicePixelRatio;
-  const driven = CanvasDriven.new(canvas.width, canvas.height, 1000);
+  const driven = CanvasDriven.new_zorder(canvas.width, canvas.height, 1000);
   const ctx = canvas.getContext("2d")!;
-  const mousePos = { x: 0, y: 0 };
+  const mousePos = { x: 0, y: 0, isPresing: false };
   canvas.addEventListener("mousemove", (e) => {
     mousePos.x = e.offsetX * devicePixelRatio;
     mousePos.y = e.offsetY * devicePixelRatio;
@@ -16,13 +16,13 @@ init().then(async () => {
     driven.remove_mouse_pos();
   });
   canvas.addEventListener("mousedown", (e) => {
-    driven.is_pressing_mouse(true);
+    mousePos.isPresing = true;
   });
   canvas.addEventListener("mouseup", (e) => {
-    driven.is_pressing_mouse(false);
+    mousePos.isPresing = false;
   });
   while (true) {
-    driven.update_mouse_pos(mousePos.x, mousePos.y);
+    driven.update_mouse_pos(mousePos.x, mousePos.y, mousePos.isPresing);
     // driven.evolve();
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     driven.draw(ctx);
