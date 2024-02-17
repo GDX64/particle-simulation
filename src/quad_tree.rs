@@ -1,4 +1,4 @@
-use kurbo::Circle;
+use kurbo::{Circle, Rect};
 
 use crate::{
     particle::GeoQuery,
@@ -51,6 +51,15 @@ impl<T: TreeValue> QuadTree<T> {
 
     pub fn get_circ(&self) -> Circle {
         self.circ
+    }
+
+    pub fn get_rect(&self) -> Rect {
+        Rect::new(
+            self.center.x - self.half_width,
+            self.center.y - self.half_height,
+            self.half_width * 2.,
+            self.half_height * 2.,
+        )
     }
 
     pub fn for_each(&self, f: impl Fn(&QuadTree<T>)) {

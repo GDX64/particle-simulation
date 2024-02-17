@@ -1,11 +1,16 @@
-import init, { CanvasDriven } from "./pkg/fluid";
+import init, { CanvasDriven, CanvasDrivenArgs, TreeType } from "./pkg/fluid";
 
 init().then(async () => {
   const canvas = document.createElement("canvas");
   document.body.appendChild(canvas);
   canvas.width = canvas.offsetWidth * devicePixelRatio;
   canvas.height = canvas.offsetHeight * devicePixelRatio;
-  const driven = CanvasDriven.new_zorder(canvas.width, canvas.height, 1000);
+  const args = CanvasDrivenArgs.default();
+  args.width = canvas.width;
+  args.height = canvas.height;
+  args.tree_type = TreeType.RStar;
+  args.particles = 200;
+  const driven = CanvasDriven.new(args);
   const ctx = canvas.getContext("2d")!;
   const mousePos = { x: 0, y: 0, isPresing: false };
   canvas.addEventListener("mousemove", (e) => {

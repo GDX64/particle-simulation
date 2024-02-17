@@ -12,6 +12,7 @@ use crate::{
 
 pub struct DrawContext {
     pub mouse_pos: Option<V2>,
+    pub mouse_radius: f64,
 }
 
 pub trait Drawable {
@@ -21,29 +22,31 @@ pub trait Drawable {
 impl<T: TreeValue> Drawable for QuadTree<T> {
     fn draw(&self, ctx: &CanvasRenderingContext2d, draw_context: &DrawContext) -> Option<()> {
         if let Some(mouse_pos) = draw_context.mouse_pos.as_ref() {
+            draw_mouse_range(ctx, mouse_pos, draw_context.mouse_radius);
             ctx.set_fill_style(&JsValue::from("red"));
             ctx.begin_path();
-            self.query_distance(mouse_pos, PARTICLE_RADIUS, |value| {
+            self.query_distance(mouse_pos, draw_context.mouse_radius, |value| {
                 value.draw(ctx, draw_context);
             });
             ctx.fill();
 
-            self.query_distance_path(mouse_pos, PARTICLE_RADIUS)
+            ctx.begin_path();
+            ctx.set_stroke_style(&JsValue::from("yellow"));
+            self.for_each(|node| {
+                let rect = node.get_rect();
+                ctx.rect(rect.x0, rect.y0, rect.width(), rect.height());
+            });
+            ctx.stroke();
+
+            ctx.begin_path();
+            ctx.set_stroke_style(&JsValue::from("red"));
+            self.query_distance_path(mouse_pos, draw_context.mouse_radius)
                 .into_iter()
                 .for_each(|node| {
-                    ctx.set_stroke_style(&JsValue::from("red"));
-                    ctx.begin_path();
-                    let circ = node.get_circ();
-                    ctx.arc(
-                        circ.center.x,
-                        circ.center.y,
-                        circ.radius,
-                        0.0,
-                        std::f64::consts::PI * 2.0,
-                    )
-                    .ok();
-                    ctx.stroke();
-                })
+                    let rect = node.get_rect();
+                    ctx.rect(rect.x0, rect.y0, rect.width(), rect.height());
+                });
+            ctx.stroke();
         }
         Some(())
     }
@@ -63,9 +66,10 @@ impl<T: TreeValue> Drawable for ZOrderTree<T> {
             ctx.stroke();
         }
         if let Some(mouse_pos) = draw_context.mouse_pos.as_ref() {
+            draw_mouse_range(ctx, mouse_pos, draw_context.mouse_radius);
             ctx.set_fill_style(&JsValue::from("red"));
             ctx.begin_path();
-            self.query_distance(mouse_pos, PARTICLE_RADIUS, |value| {
+            self.query_distance(mouse_pos, draw_context.mouse_radius, |value| {
                 value.draw(ctx, draw_context);
             });
             ctx.fill();
@@ -82,6 +86,16 @@ impl<T: TreeValue> Drawable for RStartree<T> {
         ctx.begin_path();
         values.for_each(|rect: Rect| ctx.rect(rect.x0, rect.y0, rect.width(), rect.height()));
         ctx.stroke();
+
+        if let Some(mouse_pos) = draw_context.mouse_pos.as_ref() {
+            draw_mouse_range(ctx, mouse_pos, draw_context.mouse_radius);
+            ctx.set_fill_style(&JsValue::from("red"));
+            ctx.begin_path();
+            self.query_distance(mouse_pos, draw_context.mouse_radius, |value| {
+                value.draw(ctx, draw_context);
+            });
+            ctx.fill();
+        }
         ctx.restore();
         Some(())
     }
@@ -118,4 +132,18 @@ impl<T: TreeValue> Drawable for T {
         );
         Some(())
     }
+}
+
+fn draw_mouse_range(ctx: &CanvasRenderingContext2d, mouse_pos: &V2, radius: f64) {
+    ctx.set_stroke_style(&JsValue::from("red"));
+    ctx.begin_path();
+    ctx.arc(
+        mouse_pos.x,
+        mouse_pos.y,
+        radius,
+        0.,
+        std::f64::consts::PI * 2.,
+    )
+    .unwrap();
+    ctx.stroke();
 }

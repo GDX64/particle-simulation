@@ -36,6 +36,18 @@ pub struct CanvasDrivenArgs {
 }
 
 #[wasm_bindgen]
+impl CanvasDrivenArgs {
+    pub fn default() -> Self {
+        CanvasDrivenArgs {
+            width: 800.,
+            height: 600.,
+            particles: 100,
+            tree_type: TreeType::RStar,
+        }
+    }
+}
+
+#[wasm_bindgen]
 extern "C" {
     #[wasm_bindgen(js_namespace = Math)]
     fn random() -> f64;
@@ -63,7 +75,10 @@ impl CanvasDriven {
         world.add_random_particles(particles, random);
         CanvasDriven {
             world: Box::new(world),
-            draw_context: DrawContext { mouse_pos: None },
+            draw_context: DrawContext {
+                mouse_pos: None,
+                mouse_radius: 50.,
+            },
         }
     }
 
