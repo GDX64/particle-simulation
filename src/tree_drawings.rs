@@ -3,6 +3,7 @@ use wasm_bindgen::JsValue;
 use web_sys::CanvasRenderingContext2d;
 
 use crate::{
+    hash_grid::HashGrid,
     hilbert_tree::{SpaceFillingCurve, SpaceFillingTree},
     particle::{GeoQuery, Particle, World, PARTICLE_RADIUS},
     quad_tree::QuadTree,
@@ -103,6 +104,28 @@ impl<T: TreeValue> Drawable for RStartree<T> {
         values.for_each(|rect: Rect| ctx.rect(rect.x0, rect.y0, rect.width(), rect.height()));
         ctx.stroke();
 
+        if let Some(mouse_pos) = draw_context.mouse_pos.as_ref() {
+            draw_mouse_range(ctx, mouse_pos, draw_context.mouse_radius);
+            ctx.set_fill_style(&JsValue::from("red"));
+            ctx.begin_path();
+            self.query_distance(mouse_pos, draw_context.mouse_radius, |value| {
+                value.draw(ctx, draw_context);
+            });
+            ctx.fill();
+        }
+        ctx.restore();
+        Some(())
+    }
+}
+
+impl<T: TreeValue> Drawable for HashGrid<T> {
+    fn draw(&self, ctx: &CanvasRenderingContext2d, draw_context: &DrawContext) -> Option<()> {
+        ctx.begin_path();
+        ctx.set_stroke_style(&JsValue::from("white"));
+        self.get_rects().into_iter().for_each(|rect| {
+            ctx.rect(rect.x0, rect.y0, rect.width(), rect.height());
+        });
+        ctx.stroke();
         if let Some(mouse_pos) = draw_context.mouse_pos.as_ref() {
             draw_mouse_range(ctx, mouse_pos, draw_context.mouse_radius);
             ctx.set_fill_style(&JsValue::from("red"));

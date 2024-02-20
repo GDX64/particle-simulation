@@ -14,7 +14,9 @@ mod rstar_tree;
 mod tree_drawings;
 mod v2;
 use particle::*;
-use v2::{TreeValue, V2};
+use v2::V2;
+mod hash_grid;
+use hash_grid::HashGrid;
 
 #[wasm_bindgen]
 pub struct CanvasDriven {
@@ -29,6 +31,7 @@ pub enum TreeType {
     Hilbert,
     Quad,
     RStar,
+    HashGrid,
 }
 
 #[wasm_bindgen]
@@ -67,6 +70,7 @@ impl CanvasDriven {
             TreeType::ZOrder => CanvasDriven::_new::<SpaceFillingTree<ZOrderCurve<Particle>>>(args),
             TreeType::Quad => CanvasDriven::_new::<QuadTree<Particle>>(args),
             TreeType::RStar => CanvasDriven::_new::<RStartree<Particle>>(args),
+            TreeType::HashGrid => CanvasDriven::_new::<HashGrid<Particle>>(args),
         }
     }
 
