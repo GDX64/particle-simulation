@@ -17,6 +17,14 @@ impl TreeValue for Particle {
         self.position.clone()
     }
 
+    fn x(&self) -> f64 {
+        self.position.x
+    }
+
+    fn y(&self) -> f64 {
+        self.position.y
+    }
+
     fn offset_pos(&mut self) {
         self.position.x += 0.001;
         self.position.y += 0.001;

@@ -3,15 +3,18 @@ use rstar_tree::RStartree;
 use tree_drawings::{DrawContext, Drawable};
 use wasm_bindgen::prelude::*;
 use web_sys::CanvasRenderingContext2d;
+mod hilbert_tree;
+use hilbert_tree::{
+    curves::{HilbertCurve, ZOrderCurve},
+    SpaceFillingTree,
+};
 mod particle;
 mod quad_tree;
 mod rstar_tree;
 mod tree_drawings;
 mod v2;
-mod zorder_tree;
 use particle::*;
-use v2::V2;
-use zorder_tree::ZOrderTree;
+use v2::{TreeValue, V2};
 
 #[wasm_bindgen]
 pub struct CanvasDriven {
@@ -23,6 +26,7 @@ pub struct CanvasDriven {
 #[derive(Clone, Copy)]
 pub enum TreeType {
     ZOrder,
+    Hilbert,
     Quad,
     RStar,
 }
@@ -57,7 +61,10 @@ extern "C" {
 impl CanvasDriven {
     pub fn new(args: CanvasDrivenArgs) -> CanvasDriven {
         match args.tree_type {
-            TreeType::ZOrder => CanvasDriven::_new::<ZOrderTree<Particle>>(args),
+            TreeType::Hilbert => {
+                CanvasDriven::_new::<SpaceFillingTree<HilbertCurve<Particle>>>(args)
+            }
+            TreeType::ZOrder => CanvasDriven::_new::<SpaceFillingTree<ZOrderCurve<Particle>>>(args),
             TreeType::Quad => CanvasDriven::_new::<QuadTree<Particle>>(args),
             TreeType::RStar => CanvasDriven::_new::<RStartree<Particle>>(args),
         }
@@ -78,6 +85,8 @@ impl CanvasDriven {
             draw_context: DrawContext {
                 mouse_pos: None,
                 mouse_radius: 50.,
+                width,
+                height,
             },
         }
     }

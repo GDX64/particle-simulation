@@ -1,18 +1,20 @@
-use kurbo::Rect;
+use kurbo::{Circle, Rect, Shape};
 use wasm_bindgen::JsValue;
 use web_sys::CanvasRenderingContext2d;
 
 use crate::{
+    hilbert_tree::{SpaceFillingCurve, SpaceFillingTree},
     particle::{GeoQuery, Particle, World, PARTICLE_RADIUS},
     quad_tree::QuadTree,
     rstar_tree::RStartree,
     v2::{TreeValue, V2},
-    zorder_tree::ZOrderTree,
 };
 
 pub struct DrawContext {
     pub mouse_pos: Option<V2>,
     pub mouse_radius: f64,
+    pub width: f64,
+    pub height: f64,
 }
 
 pub trait Drawable {
@@ -52,20 +54,32 @@ impl<T: TreeValue> Drawable for QuadTree<T> {
     }
 }
 
-impl<T: TreeValue> Drawable for ZOrderTree<T> {
+impl<T: SpaceFillingCurve> Drawable for SpaceFillingTree<T> {
     fn draw(&self, ctx: &CanvasRenderingContext2d, draw_context: &DrawContext) -> Option<()> {
-        let mut values = self.values();
-        if let Some(first) = values.next() {
-            let first_position = first.position();
-            ctx.set_stroke_style(&JsValue::from("yellow"));
-            ctx.move_to(first_position.x, first_position.y);
-            values.for_each(|value| {
-                let position = value.position();
-                ctx.line_to(position.x, position.y);
+        ctx.begin_path();
+        ctx.set_stroke_style(&JsValue::from("yellow"));
+        ctx.move_to(0., 0.);
+        let num_of_points = self.number_of(draw_context.width * 2.0, draw_context.height * 2.0);
+        (0..num_of_points).for_each(|i| {
+            let (x, y) = self.pair_of(i);
+            ctx.line_to(x, y);
+        });
+        ctx.stroke();
+        if let Some(mouse_pos) = draw_context.mouse_pos.as_ref() {
+            let mouse_circle = Circle::new((mouse_pos.x, mouse_pos.y), draw_context.mouse_radius);
+            let rect = mouse_circle.bounding_box();
+            let lims = self.get_rect_limits(&rect);
+
+            let first = self.pair_of(lims.0);
+            ctx.begin_path();
+            ctx.set_stroke_style(&JsValue::from("red"));
+            ctx.move_to(first.0, first.1);
+            (lims.0..lims.1).for_each(|i| {
+                let (x, y) = self.pair_of(i);
+                ctx.line_to(x, y);
             });
             ctx.stroke();
-        }
-        if let Some(mouse_pos) = draw_context.mouse_pos.as_ref() {
+
             draw_mouse_range(ctx, mouse_pos, draw_context.mouse_radius);
             ctx.set_fill_style(&JsValue::from("red"));
             ctx.begin_path();
@@ -73,6 +87,8 @@ impl<T: TreeValue> Drawable for ZOrderTree<T> {
                 value.draw(ctx, draw_context);
             });
             ctx.fill();
+            let order = self.number_of(mouse_pos.x, mouse_pos.y);
+            ctx.fill_text(&format!("{order}"), 20.0, 20.0).unwrap();
         }
         Some(())
     }
