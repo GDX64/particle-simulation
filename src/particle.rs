@@ -42,10 +42,10 @@ pub struct World<T> {
     pub is_pressing_mouse: bool,
 }
 
-const PRESSURE_MULTIPLIER: f64 = 10000.;
+const PRESSURE_MULTIPLIER: f64 = 1000.;
 const STEP: f64 = 0.006;
-const FRICTION: f64 = 0.5;
-pub const PARTICLE_RADIUS: f64 = 4.;
+const FRICTION: f64 = 0.05;
+pub const PARTICLE_RADIUS: f64 = 20.;
 const MOUSE_FORCE: f64 = -200.;
 
 fn smoothing_kernel_gradient(d: f64) -> f64 {
@@ -76,8 +76,8 @@ impl<T: GeoQuery<Particle>> World<T> {
         for _ in 0..n {
             let x = rng() * self.dimensions.x;
             let y = rng() * self.dimensions.y;
-            let vx = rng() * 100. - 50.;
-            let vy = rng() * 100. - 50.;
+            let vx = 0.0;
+            let vy = 0.0;
             let particle = Particle::new(V2::new(x, y), V2::new(vx, vy));
             self.particles.push(particle);
         }
@@ -90,14 +90,18 @@ impl<T: GeoQuery<Particle>> World<T> {
         self.tree.query_distance(point, PARTICLE_RADIUS, |other| {
             let p_vec = other.position.sub(&particle.position);
             let p_norm = p_vec.normalized();
-            let d = p_vec.len().max(0.01);
-            if d > PARTICLE_RADIUS {
+            let d = p_vec.len();
+            if d > PARTICLE_RADIUS || d < 0.001 {
                 return;
             }
-            let g = -smoothing_kernel_gradient(d) * PRESSURE_MULTIPLIER;
-            gradient = gradient.add(&&p_norm.scalar_mul(g));
-            let collision_penalty = particle.velocity.sub(&other.velocity).scalar_mul(-FRICTION);
-            gradient = gradient.add(&collision_penalty);
+            let d = d.max(0.01);
+            let kernel = smoothing_kernel_gradient(d);
+            let g = -kernel * PRESSURE_MULTIPLIER;
+            gradient = gradient + g * p_norm;
+            let friction_particle = -FRICTION * particle.velocity.sub(&other.velocity);
+            // let velocity_direction = particle.velocity.normalized();
+            // let collision_penalty = -1. * kernel * velocity_direction;
+            gradient = gradient + friction_particle;
         });
         gradient
     }
@@ -138,11 +142,8 @@ impl<T: GeoQuery<Particle>> World<T> {
             .particles
             .iter()
             .map(|p| {
-                let mut particle = p.clone();
-                let acc = self.calc_particle_acc(&particle).add(&self.gravity);
-                // let force = acc.add(&self.gravity);
-                particle.velocity = particle.velocity.add(&acc.scalar_mul(dt));
-                particle.position = particle.position.add(&particle.velocity.scalar_mul(dt));
+                let acc = self.calc_particle_acc(&p) + self.gravity;
+                let mut particle = rk4_integrate(&p, acc, dt);
 
                 if particle.position.x < 0. {
                     particle.position.x = 0.;
@@ -166,6 +167,23 @@ impl<T: GeoQuery<Particle>> World<T> {
                 return particle;
             })
             .collect();
+    }
+}
+
+pub fn rk4_integrate(state: &Particle, acceleration: V2, dt: f64) -> Particle {
+    let k1v: V2 = dt * acceleration;
+    let k1p: V2 = dt * state.velocity;
+    let k2v: V2 = dt * acceleration;
+    let k2p: V2 = dt * (state.velocity + 0.5 * k1v);
+    let k3v: V2 = dt * acceleration;
+    let k3p: V2 = dt * (state.velocity + 0.5 * k2v);
+    let k4v: V2 = dt * acceleration;
+    let k4p: V2 = dt * (state.velocity + k3v);
+    let new_velocity = state.velocity + (1.0 / 6.0) * (k1v + 2.0 * k2v + 2.0 * k3v + k4v);
+    let new_position = state.position + (1.0 / 6.0) * (k1p + 2.0 * k2p + 2.0 * k3p + k4p);
+    Particle {
+        position: new_position,
+        velocity: new_velocity,
     }
 }
 

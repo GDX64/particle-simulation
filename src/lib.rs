@@ -95,8 +95,8 @@ impl CanvasDriven {
         }
     }
 
-    pub fn evolve(&mut self) {
-        self.world.evolve(4);
+    pub fn evolve(&mut self, n: usize) {
+        self.world.evolve(n);
     }
 
     pub fn remove_mouse_pos(&mut self) {

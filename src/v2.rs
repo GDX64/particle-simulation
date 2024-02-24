@@ -1,4 +1,6 @@
-#[derive(Clone, Debug, PartialEq)]
+use std::ops::{Add, Mul};
+
+#[derive(Clone, Debug, PartialEq, Copy)]
 pub struct V2 {
     pub x: f64,
     pub y: f64,
@@ -39,6 +41,25 @@ impl V2 {
 
     pub fn distance_to(&self, other: &V2) -> f64 {
         ((self.x - other.x).powi(2) + (self.y - other.y).powi(2)).sqrt()
+    }
+}
+
+impl Add for V2 {
+    type Output = Self;
+
+    fn add(self, other: Self) -> Self::Output {
+        Self {
+            x: self.x + other.x,
+            y: self.y + other.y,
+        }
+    }
+}
+
+impl Mul<V2> for f64 {
+    type Output = V2;
+
+    fn mul(self, rhs: V2) -> Self::Output {
+        V2::new(self * rhs.x, self * rhs.y)
     }
 }
 

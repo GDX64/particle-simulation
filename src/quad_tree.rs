@@ -232,6 +232,12 @@ mod tests {
         fn offset_pos(&mut self) {
             *self = self.add(&V2::new(0.0001, 0.0001));
         }
+        fn x(&self) -> f64 {
+            self.x
+        }
+        fn y(&self) -> f64 {
+            self.y
+        }
     }
 
     #[test]

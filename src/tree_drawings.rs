@@ -163,11 +163,12 @@ impl<T: GeoQuery<Particle> + Drawable> Drawable for World<T> {
 impl<T: TreeValue> Drawable for T {
     fn draw(&self, ctx: &CanvasRenderingContext2d, draw_context: &DrawContext) -> Option<()> {
         let position = self.position();
+        let sqrt_2 = 2.0_f64.sqrt();
         ctx.rect(
-            position.x - PARTICLE_RADIUS,
-            position.y - PARTICLE_RADIUS,
-            PARTICLE_RADIUS * 2.0,
-            PARTICLE_RADIUS * 2.0,
+            position.x - PARTICLE_RADIUS / sqrt_2,
+            position.y - PARTICLE_RADIUS / sqrt_2,
+            PARTICLE_RADIUS / sqrt_2 * 2.0,
+            PARTICLE_RADIUS / sqrt_2 * 2.0,
         );
         Some(())
     }
