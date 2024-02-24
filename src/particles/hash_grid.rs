@@ -5,7 +5,10 @@ use std::{
 
 use kurbo::Rect;
 
-use crate::{v2::TreeValue, GeoQuery};
+use super::{
+    v2::{TreeValue, V2},
+    GeoQuery,
+};
 
 struct FastHasher {
     value: u64,
@@ -53,7 +56,7 @@ impl<T: TreeValue> HashGrid<T> {
         grid
     }
 
-    fn calc_cell(&self, point: &crate::v2::V2) -> (i32, i32) {
+    fn calc_cell(&self, point: &V2) -> (i32, i32) {
         let x = (point.x / self.divisor).floor();
         let y = (point.y / self.divisor).floor();
         (x as i32, y as i32)
@@ -87,7 +90,7 @@ impl<T: TreeValue> GeoQuery<T> for HashGrid<T> {
     }
 
     #[inline(never)]
-    fn query_distance(&self, point: &crate::v2::V2, radius: f64, mut f: impl FnMut(&T)) {
+    fn query_distance(&self, point: &V2, radius: f64, mut f: impl FnMut(&T)) {
         let key = self.calc_cell(point);
         self.neighbor_keys(&key).for_each(|key| {
             if let Some(values) = self.data.get(&key) {

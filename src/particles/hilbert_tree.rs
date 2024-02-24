@@ -1,4 +1,4 @@
-use crate::{particle::GeoQuery, v2::TreeValue, v2::V2};
+use super::{particle::GeoQuery, v2::TreeValue, v2::V2};
 use kurbo::{Circle, Rect, Shape};
 
 struct OrderStore<T> {
@@ -100,7 +100,7 @@ impl<S: SpaceFillingCurve> GeoQuery<S::T> for SpaceFillingTree<S> {
 }
 
 pub mod curves {
-    use crate::v2::TreeValue;
+    use super::super::v2::TreeValue;
 
     pub struct HilbertCurve<T> {
         _t: std::marker::PhantomData<T>,

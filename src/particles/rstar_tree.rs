@@ -1,7 +1,7 @@
 use kurbo::{Circle, Rect, Shape};
 use rstar::RTreeObject;
 
-use crate::{
+use super::{
     particle::GeoQuery,
     v2::{TreeValue, V2},
 };

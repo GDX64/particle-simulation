@@ -1,4 +1,4 @@
-use crate::v2::{TreeValue, V2};
+use super::v2::{TreeValue, V2};
 
 #[derive(Clone, Debug)]
 pub struct Particle {

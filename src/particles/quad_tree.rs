@@ -1,6 +1,6 @@
 use kurbo::{Circle, Rect};
 
-use crate::{
+use super::{
     particle::GeoQuery,
     v2::{TreeValue, V2},
 };

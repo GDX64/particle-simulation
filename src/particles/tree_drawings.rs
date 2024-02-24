@@ -2,7 +2,7 @@ use kurbo::{Circle, Rect, Shape};
 use wasm_bindgen::JsValue;
 use web_sys::CanvasRenderingContext2d;
 
-use crate::{
+use super::{
     hash_grid::HashGrid,
     hilbert_tree::{SpaceFillingCurve, SpaceFillingTree},
     particle::{GeoQuery, Particle, World, PARTICLE_RADIUS},
