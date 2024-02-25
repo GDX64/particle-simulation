@@ -9,7 +9,7 @@ init().then(async () => {
   args.width = canvas.width;
   args.height = canvas.height;
   args.tree_type = TreeType.RStar;
-  args.particles = 1000;
+  args.particles = 5_000;
   const driven = CanvasDriven.new(args);
   const ctx = canvas.getContext("2d")!;
   const mousePos = { x: 0, y: 0, isPresing: false };
@@ -28,7 +28,7 @@ init().then(async () => {
   });
   while (true) {
     driven.update_mouse_pos(mousePos.x, mousePos.y, mousePos.isPresing);
-    driven.evolve(4);
+    driven.evolve(1);
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     driven.draw(ctx);
     await raf();

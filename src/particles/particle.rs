@@ -1,4 +1,4 @@
-use super::v2::{TreeValue, V2};
+use super::v2::{ParticleLike, TreeValue, V2};
 
 #[derive(Clone, Debug)]
 pub struct Particle {
@@ -42,10 +42,10 @@ pub struct World<T> {
     pub is_pressing_mouse: bool,
 }
 
-const PRESSURE_MULTIPLIER: f64 = 1000.;
-const STEP: f64 = 0.006;
+const PRESSURE_MULTIPLIER: f64 = 2000.;
+const STEP: f64 = 0.01;
 const FRICTION: f64 = 0.05;
-pub const PARTICLE_RADIUS: f64 = 20.;
+pub const PARTICLE_RADIUS: f64 = 4.;
 const MOUSE_FORCE: f64 = -200.;
 
 fn smoothing_kernel_gradient(d: f64) -> f64 {
@@ -94,7 +94,6 @@ impl<T: GeoQuery<Particle>> World<T> {
             if d > PARTICLE_RADIUS || d < 0.001 {
                 return;
             }
-            let d = d.max(0.01);
             let kernel = smoothing_kernel_gradient(d);
             let g = -kernel * PRESSURE_MULTIPLIER;
             gradient = gradient + g * p_norm;
@@ -143,7 +142,8 @@ impl<T: GeoQuery<Particle>> World<T> {
             .iter()
             .map(|p| {
                 let acc = self.calc_particle_acc(&p) + self.gravity;
-                let mut particle = rk4_integrate(&p, acc, dt);
+                let mut particle = p.rk4_integrate(acc, dt);
+                particle.velocity = particle.velocity * (0.999); //so that they loose energy
 
                 if particle.position.x < 0. {
                     particle.position.x = 0.;
@@ -170,24 +170,19 @@ impl<T: GeoQuery<Particle>> World<T> {
     }
 }
 
-pub fn rk4_integrate(state: &Particle, acceleration: V2, dt: f64) -> Particle {
-    let k1v: V2 = dt * acceleration;
-    let k1p: V2 = dt * state.velocity;
-    let k2v: V2 = dt * acceleration;
-    let k2p: V2 = dt * (state.velocity + 0.5 * k1v);
-    let k3v: V2 = dt * acceleration;
-    let k3p: V2 = dt * (state.velocity + 0.5 * k2v);
-    let k4v: V2 = dt * acceleration;
-    let k4p: V2 = dt * (state.velocity + k3v);
-    let new_velocity = state.velocity + (1.0 / 6.0) * (k1v + 2.0 * k2v + 2.0 * k3v + k4v);
-    let new_position = state.position + (1.0 / 6.0) * (k1p + 2.0 * k2p + 2.0 * k3p + k4p);
-    Particle {
-        position: new_position,
-        velocity: new_velocity,
-    }
-}
-
 pub trait GeoQuery<T> {
     fn query_distance(&self, point: &V2, radius: f64, f: impl FnMut(&T));
     fn from_vec(vec: Vec<T>, max_dim: f64) -> Self;
+}
+
+impl ParticleLike for Particle {
+    fn with_position_and_velocity(&self, position: V2, velocity: V2) -> Particle {
+        Particle { position, velocity }
+    }
+    fn position(&self) -> V2 {
+        self.position.clone()
+    }
+    fn velocity(&self) -> V2 {
+        self.velocity.clone()
+    }
 }
