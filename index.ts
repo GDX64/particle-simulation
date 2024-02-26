@@ -14,15 +14,27 @@ init().then(async () => {
 });
 
 async function drawPendulum(canvas: HTMLCanvasElement) {
-  const pendulum = Pendulum.new(17);
+  const N = canvas.offsetWidth / 5;
+  const arrPendulum = Array.from({ length: N }, (_, i) => {
+    return Pendulum.new(15, 0.01);
+  });
   const ctx = canvas.getContext("2d")!;
+  const matrix = new DOMMatrix();
+  matrix.translateSelf(canvas.width / 2, canvas.height / 10);
+  matrix.scaleSelf(devicePixelRatio, -devicePixelRatio);
+  canvas.addEventListener("pointermove", (e) => {
+    const { offsetX: x, offsetY: y } = e;
+    const transformed = matrix.inverse().transformPoint({ x, y });
+    arrPendulum.forEach((p, i) =>
+      p.update_fixed_ball(transformed.x + (i - N / 2) * 5, transformed.y)
+    );
+  });
   while (true) {
-    pendulum.evolve(0.016);
+    arrPendulum.forEach((p) => p.evolve(0.016, 1));
     ctx.save();
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.translate(canvas.width / 2, canvas.height / 10);
-    ctx.scale(1, -1);
-    pendulum.draw(ctx);
+    ctx.setTransform(matrix);
+    arrPendulum.forEach((p) => p.draw(ctx));
     ctx.restore();
     await raf();
     // await awaitClick();
