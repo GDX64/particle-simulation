@@ -168,14 +168,6 @@ impl Pendulum {
                 ctx.line_to(position_2.x, position_2.y);
                 ctx.stroke();
             }
-            ctx.begin_path();
-            ctx.rect(
-                position_1.x - ball.radius() / 2.,
-                position_1.y - ball.radius() / 2.,
-                ball.radius(),
-                ball.radius(),
-            )
         });
-        ctx.fill();
     }
 }
