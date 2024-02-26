@@ -14,17 +14,18 @@ init().then(async () => {
 });
 
 async function drawPendulum(canvas: HTMLCanvasElement) {
-  const pendulum = Pendulum.new();
+  const pendulum = Pendulum.new(17);
   const ctx = canvas.getContext("2d")!;
   while (true) {
-    pendulum.evolve();
+    pendulum.evolve(0.016);
     ctx.save();
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.translate(canvas.width / 2, canvas.height / 2);
+    ctx.translate(canvas.width / 2, canvas.height / 10);
     ctx.scale(1, -1);
     pendulum.draw(ctx);
     ctx.restore();
     await raf();
+    // await awaitClick();
   }
 }
 
@@ -56,9 +57,15 @@ async function drawParticles(canvas: HTMLCanvasElement) {
   });
   while (true) {
     driven.update_mouse_pos(mousePos.x, mousePos.y, mousePos.isPresing);
-    driven.evolve(1);
+    driven.evolve(4);
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     driven.draw(ctx);
     await raf();
   }
+}
+
+async function awaitClick() {
+  return new Promise((resolve) => {
+    document.addEventListener("click", resolve, { once: true });
+  });
 }
